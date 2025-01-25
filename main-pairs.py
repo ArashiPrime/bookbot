@@ -4,7 +4,7 @@ import sys
 
 def read_file(filepath):
     # Read the contents of the file and return it as a string
-    with open(filepath) as file:
+    with open(filepath, 'r') as file:
         file_contents = file.read()
         return file_contents
 
@@ -24,6 +24,25 @@ def count_unique_words(text):
     # Use Counter to count the frequency of each word
     word_counts = Counter(words)
     return len(word_counts)    
+
+def count_first_two_letters(text):
+    # Dictionary to store frequency of starting letter pairs
+    letter_pairs_dict = {}
+
+    words = text.split()
+    
+    for word in words:
+        # Normalize to lowercase to combine cases like 'Th' and 'th'
+        word = word.lower()
+        if len(word) >= 2:
+            first_two = word[:2]
+            # Only count pairs of letters, not numbers or symbols
+            if first_two.isalpha():
+                if first_two in letter_pairs_dict:
+                    letter_pairs_dict[first_two] += 1
+                else:
+                    letter_pairs_dict[first_two] = 1
+    return letter_pairs_dict
 
 def count_unique_characters(text):
     # Count all unique characters in the text
@@ -59,7 +78,7 @@ def count_unique_characters(text):
                 symbol_dict[character] = 1 
     return character_dict, number_dict, whitespace_dict, symbol_dict
 
-def count_most_used_word(text):
+def find_most_common_word(text):
     # Split the text into words
     words = text.split()
 
@@ -67,7 +86,10 @@ def count_most_used_word(text):
     word_counts = Counter(words)
 
     # Find the most common word and its frequency
-    most_common_word, frequency = word_counts.most_common(1)[0]
+    if word_counts:
+        most_common_word, frequency = word_counts.most_common(1)[0]
+    else:
+        most_common_word, frequency = None, 0
     return most_common_word, frequency
 
 def main(filepath):
@@ -79,35 +101,41 @@ def main(filepath):
     character_count = count_characters(text)
     unique_word_count = count_unique_words(text)
     character_dict, number_dict, whitespace_dict, symbol_dict = count_unique_characters(text)
-    most_common_word, frequency = count_most_used_word(text)
+    most_common_word, frequency = find_most_common_word(text)
+    letter_pairs_counts = count_first_two_letters(text)
 
-     # Print the results
+    # Print the results
     print(f"--- Begin report of {filepath} ---")
     print(f"Word count: {word_count}")
-    print(f"Character count: {character_count}")
-    print(f"{word_count} words found in the document")
     print(f"Unique word count: {unique_word_count}")
     print(f"Most common word: '{most_common_word}' with a frequency of {frequency}")
+    print("")
+    print(f"Total character count: {character_count}")
     print(f"Count of each unique character: {character_dict}")
 
+    def sort_by_count(item):
+        return item[1]
 
-    for character_count in sorted(character_dict.items(), key=lambda item: item[1], reverse=True):
-        if character_count[0].isalpha():
-            print(f"The character '{character_count[0]}' was found {character_count[1]} times")
+    for char_count in sorted(character_dict.items(), key=sort_by_count, reverse=True):
+        if char_count[0].isalpha():
+            print(f"The character '{char_count[0]}' was found {char_count[1]} times")
     
+
+    print("")
+    print(f"The following 2-character pairs are the most common to start words with:")
+    
+    sorted_pairs = sorted(letter_pairs_counts.items(), key=sort_by_count, reverse=True)[:10]
+    
+    # Get top 10 pairs sorted by frequency
+    
+    for pair, count in sorted_pairs:
+        print(f"The letter pair '{pair}' appears at the start of {count} words")
+
     print("--- End report ---")
    
-
-#    print("Count of each unique character:")
-    
-#    for character, count in sorted(character_dict.items(), key=lambda item: item[1], reverse=True):
-#        if character.isalpha():
-#            print(f"The character '{character}' was found {count} times")
-
-    
 if __name__ == "__main__":
     # Execute the main function
     if len(sys.argv) != 2:
-        print("Usage: python main.py <filepath>")
+        print("Usage: python main-pairs.py <filepath>")
     else:
         main(sys.argv[1])
